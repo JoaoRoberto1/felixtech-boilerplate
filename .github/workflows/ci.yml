@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  DATABASE_URL: postgresql://felix:felix@localhost:5432/felix_boilerplate?schema=public
+  API_URL: http://localhost:4000
+  CLIENT_URL: http://localhost:5173
+  JWT_ACCESS_SECRET: ci_access_secret_placeholder_min_32_chars
+  JWT_REFRESH_SECRET: ci_refresh_secret_placeholder_min_32_chars
+  STRIPE_SECRET_KEY: sk_test_placeholder
+  STRIPE_WEBHOOK_SECRET: whsec_placeholder
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: felix
+          POSTGRES_PASSWORD: felix
+          POSTGRES_DB: felix_boilerplate
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U felix -d felix_boilerplate"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm db:generate
+
+      - name: Run database migrations
+        run: pnpm --filter @felix/api exec prisma migrate deploy
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Build
+        run: pnpm build
+
+      - name: Test
+        run: pnpm test
