@@ -8,16 +8,21 @@ export async function listRoles(req: Request, res: Response): Promise<void> {
 }
 
 export async function createRole(req: Request, res: Response): Promise<void> {
-  const role = await roleService.createRole(req.params.teamId!, req.body);
+  const role = await roleService.createRole(req.params.teamId!, req.body, req.userId!);
   res.status(201).json({ role: toRoleDto(role) });
 }
 
 export async function updateRole(req: Request, res: Response): Promise<void> {
-  const role = await roleService.updateRole(req.params.teamId!, req.params.roleId!, req.body);
+  const role = await roleService.updateRole(
+    req.params.teamId!,
+    req.params.roleId!,
+    req.body,
+    req.userId!,
+  );
   res.json({ role: toRoleDto(role) });
 }
 
 export async function deleteRole(req: Request, res: Response): Promise<void> {
-  await roleService.deleteRole(req.params.teamId!, req.params.roleId!);
+  await roleService.deleteRole(req.params.teamId!, req.params.roleId!, req.userId!);
   res.status(204).send();
 }
