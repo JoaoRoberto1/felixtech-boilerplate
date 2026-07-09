@@ -23,8 +23,8 @@ export function AppShell() {
     <div className="flex min-h-screen bg-slate-50">
       <aside className="flex w-64 flex-col border-r border-slate-200 bg-white px-4 py-6">
         <div className="mb-8 flex items-center gap-2 px-2">
-          <div className="h-7 w-7 rounded-md bg-brand-600" />
-          <span className="text-lg font-bold text-slate-900">Felix</span>
+          <img src="/logo-azul.png" alt="Felix Technology" className="h-7 w-7" />
+          <span className="text-lg font-bold text-slate-900">Felix Technology</span>
         </div>
 
         <nav className="flex flex-1 flex-col gap-1">
