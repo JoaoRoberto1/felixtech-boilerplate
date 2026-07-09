@@ -11,8 +11,9 @@ export async function createTeam(req: Request, res: Response): Promise<void> {
 export async function listMyTeams(req: Request, res: Response): Promise<void> {
   const memberships = await teamService.listTeamsForUser(req.userId!);
   res.json({
-    teams: memberships.map(({ team, role }) =>
+    teams: memberships.map(({ team, role, memberCount }) =>
       toTeamDto(team, {
+        memberCount,
         myRole: { id: role.id, name: role.name },
         myPermissions: role.permissions.map((rp) => rp.permission.key),
       }),
