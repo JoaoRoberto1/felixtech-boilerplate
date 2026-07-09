@@ -38,7 +38,11 @@ export async function listInvitations(req: Request, res: Response): Promise<void
 }
 
 export async function revokeInvitation(req: Request, res: Response): Promise<void> {
-  await invitationService.revokeInvitation(req.params.teamId!, req.params.invitationId!);
+  await invitationService.revokeInvitation(
+    req.params.teamId!,
+    req.params.invitationId!,
+    req.userId!,
+  );
   res.status(204).send();
 }
 
