@@ -1,7 +1,13 @@
 import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../utils/errors.js';
-import { DEFAULT_ROLE_PERMISSIONS, SYSTEM_ROLES, type SystemRoleName } from '@felix/shared';
+import {
+  ACTIVITY_ACTIONS,
+  DEFAULT_ROLE_PERMISSIONS,
+  SYSTEM_ROLES,
+  type SystemRoleName,
+} from '@felix/shared';
 import type { Prisma } from '@prisma/client';
+import { logActivity } from '../activity/activity.service.js';
 
 function slugify(name: string): string {
   return (
@@ -57,7 +63,7 @@ async function seedSystemRoles(
 export async function createTeamWithOwner(userId: string, name: string) {
   const slug = await generateUniqueSlug(name);
 
-  return prisma.$transaction(async (tx) => {
+  const team = await prisma.$transaction(async (tx) => {
     const team = await tx.team.create({ data: { name, slug, ownerId: userId } });
     const roleIds = await seedSystemRoles(tx, team.id);
 
@@ -67,6 +73,10 @@ export async function createTeamWithOwner(userId: string, name: string) {
 
     return team;
   });
+
+  await logActivity({ teamId: team.id, actorId: userId, action: ACTIVITY_ACTIONS.TEAM_CREATED });
+
+  return team;
 }
 
 export async function listTeamsForUser(userId: string) {
@@ -92,14 +102,20 @@ export async function getTeamOrThrow(teamId: string) {
   return team;
 }
 
-export async function updateTeam(teamId: string, data: { name?: string; slug?: string }) {
+export async function updateTeam(
+  teamId: string,
+  data: { name?: string; slug?: string },
+  actorId: string,
+) {
   if (data.slug) {
     const existing = await prisma.team.findUnique({ where: { slug: data.slug } });
     if (existing && existing.id !== teamId) {
       throw AppError.conflict('This slug is already in use');
     }
   }
-  return prisma.team.update({ where: { id: teamId }, data });
+  const team = await prisma.team.update({ where: { id: teamId }, data });
+  await logActivity({ teamId, actorId, action: ACTIVITY_ACTIONS.TEAM_UPDATED });
+  return team;
 }
 
 export async function deleteTeam(teamId: string) {
@@ -118,15 +134,33 @@ export async function countMembers(teamId: string): Promise<number> {
   return prisma.teamMember.count({ where: { teamId } });
 }
 
-export async function removeMember(teamId: string, targetUserId: string) {
+export async function removeMember(teamId: string, targetUserId: string, actorId: string) {
   const team = await getTeamOrThrow(teamId);
   if (team.ownerId === targetUserId) {
     throw AppError.badRequest('The team owner cannot be removed');
   }
+
+  const member = await prisma.teamMember.findUnique({
+    where: { teamId_userId: { teamId, userId: targetUserId } },
+    include: { user: true },
+  });
+
   await prisma.teamMember.delete({ where: { teamId_userId: { teamId, userId: targetUserId } } });
+
+  await logActivity({
+    teamId,
+    actorId,
+    action: ACTIVITY_ACTIONS.MEMBER_REMOVED,
+    metadata: member ? { memberName: member.user.name, memberEmail: member.user.email } : undefined,
+  });
 }
 
-export async function updateMemberRole(teamId: string, targetUserId: string, roleId: string) {
+export async function updateMemberRole(
+  teamId: string,
+  targetUserId: string,
+  roleId: string,
+  actorId: string,
+) {
   const team = await getTeamOrThrow(teamId);
   if (team.ownerId === targetUserId) {
     throw AppError.badRequest("The team owner's role cannot be changed");
@@ -137,9 +171,18 @@ export async function updateMemberRole(teamId: string, targetUserId: string, rol
     throw AppError.badRequest('Role does not belong to this team');
   }
 
-  return prisma.teamMember.update({
+  const member = await prisma.teamMember.update({
     where: { teamId_userId: { teamId, userId: targetUserId } },
     data: { roleId },
     include: { user: true, role: true },
   });
+
+  await logActivity({
+    teamId,
+    actorId,
+    action: ACTIVITY_ACTIONS.MEMBER_ROLE_UPDATED,
+    metadata: { memberName: member.user.name, roleName: role.name },
+  });
+
+  return member;
 }
