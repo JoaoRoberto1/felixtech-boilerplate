@@ -6,6 +6,7 @@ import {
   Users2,
   Shield,
   CreditCard,
+  Activity,
   Settings,
   LogOut,
   ChevronsUpDown,
@@ -15,6 +16,7 @@ import { getInitials } from '../../lib/initials';
 import { useAuthStore } from '../../stores/auth-store';
 import { useLogout } from '../../hooks/useAuth';
 import { useMyTeams } from '../../hooks/useTeamQueries';
+import { CommandPalette } from '../CommandPalette';
 
 const navItemClass = ({ isActive }: { isActive: boolean }) =>
   cn(
@@ -38,6 +40,10 @@ export function AppShell() {
         <div className="mb-6 flex items-center gap-2.5 px-2">
           <img src="/logo-branca.png" alt="Felix Technology" className="h-7 w-7" />
           <span className="text-base font-bold text-white">Felix Technology</span>
+        </div>
+
+        <div className="mb-4">
+          <CommandPalette />
         </div>
 
         <nav className="flex flex-1 flex-col gap-0.5">
@@ -86,6 +92,10 @@ export function AppShell() {
               <NavLink to={`/teams/${teamId}/billing`} className={navItemClass}>
                 <CreditCard className="h-4 w-4" strokeWidth={2} />
                 Billing
+              </NavLink>
+              <NavLink to={`/teams/${teamId}/activity`} className={navItemClass}>
+                <Activity className="h-4 w-4" strokeWidth={2} />
+                Activity
               </NavLink>
             </>
           )}
