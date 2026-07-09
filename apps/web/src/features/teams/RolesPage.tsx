@@ -16,6 +16,7 @@ import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Spinner } from '../../components/ui/Spinner';
 import { RoleFormDialog } from './RoleFormDialog';
+import { PermissionMatrix } from './PermissionMatrix';
 import { getApiErrorMessage } from '../../api/client';
 
 export function RolesPage() {
@@ -113,6 +114,18 @@ export function RolesPage() {
           ))}
         </CardContent>
       </Card>
+
+      {roles && roles.length > 0 && teamId && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Permission matrix</CardTitle>
+            <CardDescription>
+              Toggle what each role can do. System roles are locked and can&apos;t be changed.
+            </CardDescription>
+          </CardHeader>
+          <PermissionMatrix teamId={teamId} roles={roles} canManage={canManageRoles} />
+        </Card>
+      )}
 
       {teamId && (
         <RoleFormDialog
