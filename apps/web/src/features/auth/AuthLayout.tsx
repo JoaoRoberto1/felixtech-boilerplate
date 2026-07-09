@@ -14,7 +14,9 @@ export function AuthLayout({
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12">
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center gap-2">
-          <Link to="/" className="h-9 w-9 rounded-md bg-brand-600" />
+          <Link to="/">
+            <img src="/logo-azul.png" alt="Felix Technology" className="h-10 w-10" />
+          </Link>
           <h1 className="text-xl font-bold text-slate-900">{title}</h1>
           {subtitle && <p className="text-center text-sm text-slate-500">{subtitle}</p>}
         </div>
