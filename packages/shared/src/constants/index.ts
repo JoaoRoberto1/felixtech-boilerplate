@@ -1,4 +1,5 @@
 export * from './permissions';
+export * from './activity';
 
 /** Mirrors the Prisma `SubscriptionStatus` enum values exactly (API responses use these). */
 export const SUBSCRIPTION_STATUS = {
