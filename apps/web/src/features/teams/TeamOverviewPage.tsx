@@ -5,7 +5,15 @@ import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { TriangleAlert } from 'lucide-react';
 import { PERMISSIONS, updateTeamSchema, type UpdateTeamInput } from '@felix/shared';
-import { useTeam, useUpdateTeam, useDeleteTeam } from '../../hooks/useTeamQueries';
+import {
+  useTeam,
+  useUpdateTeam,
+  useDeleteTeam,
+  useTeamMembers,
+  useRoles,
+  useSubscription,
+} from '../../hooks/useTeamQueries';
+import { OnboardingChecklist, type OnboardingStep } from './OnboardingChecklist';
 import {
   Card,
   CardContent,
@@ -26,6 +34,9 @@ import { getApiErrorMessage } from '../../api/client';
 export function TeamOverviewPage() {
   const { teamId } = useParams<{ teamId: string }>();
   const { data: team, isLoading } = useTeam(teamId);
+  const { data: members } = useTeamMembers(teamId);
+  const { data: roles } = useRoles(teamId);
+  const { data: subscription } = useSubscription(teamId);
   const updateTeam = useUpdateTeam(teamId!);
   const deleteTeam = useDeleteTeam(teamId!);
   const navigate = useNavigate();
@@ -42,6 +53,27 @@ export function TeamOverviewPage() {
   }, [team, reset]);
 
   if (isLoading || !team) return <Spinner />;
+
+  const onboardingSteps: OnboardingStep[] = [
+    {
+      label: 'Invite a teammate',
+      done: (members?.length ?? 0) > 1,
+      href: `/teams/${teamId}/members`,
+      cta: 'Invite',
+    },
+    {
+      label: 'Create a custom role',
+      done: Boolean(roles?.some((r) => !r.isSystem)),
+      href: `/teams/${teamId}/roles`,
+      cta: 'Create role',
+    },
+    {
+      label: 'Set up billing',
+      done: Boolean(subscription && ['ACTIVE', 'TRIALING'].includes(subscription.status)),
+      href: `/teams/${teamId}/billing`,
+      cta: 'Set up',
+    },
+  ];
 
   const onSubmit = (data: UpdateTeamInput) => {
     updateTeam.mutate(data, {
@@ -72,6 +104,8 @@ export function TeamOverviewPage() {
           </div>
         </div>
       </div>
+
+      <OnboardingChecklist steps={onboardingSteps} />
 
       <Card>
         <CardHeader>
