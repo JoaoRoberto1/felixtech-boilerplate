@@ -1,16 +1,37 @@
 import { NavLink, Outlet, useNavigate, useParams } from 'react-router-dom';
+import {
+  LayoutDashboard,
+  Building2,
+  Home,
+  Users2,
+  Shield,
+  CreditCard,
+  UserRound,
+  KeyRound,
+  LogOut,
+  ChevronsUpDown,
+} from 'lucide-react';
 import { cn } from '../../lib/cn';
 import { useAuthStore } from '../../stores/auth-store';
 import { useLogout } from '../../hooks/useAuth';
 import { useMyTeams } from '../../hooks/useTeamQueries';
 
+function getInitials(name: string | undefined): string {
+  if (!name) return '?';
+  const parts = name.trim().split(/\s+/);
+  const first = parts[0]?.[0] ?? '';
+  const last = parts.length > 1 ? (parts[parts.length - 1]?.[0] ?? '') : '';
+  return (first + last).toUpperCase();
+}
+
 const navItemClass = ({ isActive }: { isActive: boolean }) =>
   cn(
-    'flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-    isActive
-      ? 'bg-brand-50 text-brand-700'
-      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
+    'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+    isActive ? 'bg-white/10 text-white' : 'text-slate-300 hover:bg-white/5 hover:text-white',
   );
+
+const sectionLabelClass =
+  'mb-1 mt-5 px-3 text-xs font-semibold uppercase tracking-wide text-slate-500';
 
 export function AppShell() {
   const user = useAuthStore((s) => s.user);
@@ -21,70 +42,88 @@ export function AppShell() {
 
   return (
     <div className="flex min-h-screen bg-slate-50">
-      <aside className="flex w-64 flex-col border-r border-slate-200 bg-white px-4 py-6">
-        <div className="mb-8 flex items-center gap-2 px-2">
-          <img src="/logo-azul.png" alt="Felix Technology" className="h-7 w-7" />
-          <span className="text-lg font-bold text-slate-900">Felix Technology</span>
+      <aside className="flex w-64 shrink-0 flex-col bg-brand-950 px-4 py-6">
+        <div className="mb-6 flex items-center gap-2.5 px-2">
+          <img src="/logo-branca.png" alt="Felix Technology" className="h-7 w-7" />
+          <span className="text-base font-bold text-white">Felix Technology</span>
         </div>
 
-        <nav className="flex flex-1 flex-col gap-1">
+        <nav className="flex flex-1 flex-col gap-0.5">
           <NavLink to="/" end className={navItemClass}>
+            <LayoutDashboard className="h-4 w-4" strokeWidth={2} />
             Dashboard
           </NavLink>
           <NavLink to="/teams" className={navItemClass}>
+            <Building2 className="h-4 w-4" strokeWidth={2} />
             Teams
           </NavLink>
+
           {teamId && (
             <>
-              <div className="mt-4 mb-1 px-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                Current team
-              </div>
+              <div className={sectionLabelClass}>Current team</div>
+
               {teams && teams.length > 1 && (
-                <select
-                  value={teamId}
-                  onChange={(e) => navigate(`/teams/${e.target.value}`)}
-                  className="mb-1 rounded-md border border-slate-300 px-2 py-1.5 text-sm"
-                >
-                  {teams.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative mb-1">
+                  <select
+                    value={teamId}
+                    onChange={(e) => navigate(`/teams/${e.target.value}`)}
+                    className="w-full appearance-none rounded-md border border-white/10 bg-white/5 px-3 py-1.5 pr-8 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  >
+                    {teams.map((t) => (
+                      <option key={t.id} value={t.id} className="text-slate-900">
+                        {t.name}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronsUpDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                </div>
               )}
+
               <NavLink to={`/teams/${teamId}`} end className={navItemClass}>
+                <Home className="h-4 w-4" strokeWidth={2} />
                 Overview
               </NavLink>
               <NavLink to={`/teams/${teamId}/members`} className={navItemClass}>
+                <Users2 className="h-4 w-4" strokeWidth={2} />
                 Members
               </NavLink>
               <NavLink to={`/teams/${teamId}/roles`} className={navItemClass}>
+                <Shield className="h-4 w-4" strokeWidth={2} />
                 Roles
               </NavLink>
               <NavLink to={`/teams/${teamId}/billing`} className={navItemClass}>
+                <CreditCard className="h-4 w-4" strokeWidth={2} />
                 Billing
               </NavLink>
             </>
           )}
-          <div className="mt-4 mb-1 px-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
-            Account
-          </div>
+
+          <div className={sectionLabelClass}>Account</div>
           <NavLink to="/settings/profile" className={navItemClass}>
+            <UserRound className="h-4 w-4" strokeWidth={2} />
             Profile
           </NavLink>
           <NavLink to="/settings/security" className={navItemClass}>
+            <KeyRound className="h-4 w-4" strokeWidth={2} />
             Security
           </NavLink>
         </nav>
 
-        <div className="border-t border-slate-200 pt-4">
-          <p className="truncate px-2 text-sm font-medium text-slate-900">{user?.name}</p>
-          <p className="truncate px-2 text-xs text-slate-500">{user?.email}</p>
+        <div className="flex items-center gap-2.5 rounded-lg border border-white/10 bg-white/5 p-2.5">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-semibold text-white">
+            {getInitials(user?.name)}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-medium text-white">{user?.name}</p>
+            <p className="truncate text-xs text-slate-400">{user?.email}</p>
+          </div>
           <button
             onClick={() => logout.mutate()}
-            className="mt-2 w-full rounded-md px-2 py-1.5 text-left text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+            title="Sign out"
+            aria-label="Sign out"
+            className="shrink-0 rounded-md p-1.5 text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
           >
-            Sign out
+            <LogOut className="h-4 w-4" strokeWidth={2} />
           </button>
         </div>
       </aside>
