@@ -73,13 +73,17 @@ export async function listTeamsForUser(userId: string) {
   const memberships = await prisma.teamMember.findMany({
     where: { userId },
     include: {
-      team: true,
+      team: { include: { _count: { select: { members: true } } } },
       role: { include: { permissions: { include: { permission: true } } } },
     },
     orderBy: { createdAt: 'asc' },
   });
 
-  return memberships.map((m) => ({ team: m.team, role: m.role }));
+  return memberships.map((m) => ({
+    team: m.team,
+    role: m.role,
+    memberCount: m.team._count.members,
+  }));
 }
 
 export async function getTeamOrThrow(teamId: string) {
