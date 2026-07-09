@@ -1,9 +1,11 @@
 import type Stripe from 'stripe';
 import { SubscriptionStatus } from '@prisma/client';
+import { ACTIVITY_ACTIONS } from '@felix/shared';
 import { prisma } from '../../lib/prisma.js';
 import { stripe } from '../../lib/stripe.js';
 import { AppError } from '../../utils/errors.js';
 import { env } from '../../config/env.js';
+import { logActivity } from '../activity/activity.service.js';
 
 async function getOrCreateStripeCustomer(teamId: string): Promise<string> {
   const existing = await prisma.subscription.findUnique({ where: { teamId } });
@@ -82,6 +84,7 @@ export async function upsertSubscriptionFromStripe(
 
   const price = subscription.items.data[0]?.price;
   const periodEnd = subscription.current_period_end;
+  const status = mapStripeStatus(subscription.status);
 
   await prisma.subscription.upsert({
     where: { teamId },
@@ -90,16 +93,23 @@ export async function upsertSubscriptionFromStripe(
       stripeCustomerId: subscription.customer as string,
       stripeSubscriptionId: subscription.id,
       stripePriceId: price?.id,
-      status: mapStripeStatus(subscription.status),
+      status,
       currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : null,
       cancelAtPeriodEnd: subscription.cancel_at_period_end,
     },
     update: {
       stripeSubscriptionId: subscription.id,
       stripePriceId: price?.id,
-      status: mapStripeStatus(subscription.status),
+      status,
       currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : null,
       cancelAtPeriodEnd: subscription.cancel_at_period_end,
     },
+  });
+
+  await logActivity({
+    teamId,
+    actorId: null,
+    action: ACTIVITY_ACTIONS.SUBSCRIPTION_UPDATED,
+    metadata: { status },
   });
 }
