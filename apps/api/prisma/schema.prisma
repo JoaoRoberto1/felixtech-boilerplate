@@ -12,21 +12,22 @@ datasource db {
 // ---------------------------------------------------------------------------
 
 model User {
-  id             String    @id @default(cuid())
-  name           String
-  email          String    @unique
-  passwordHash   String
-  avatarUrl      String?
-  emailVerified  Boolean   @default(false)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  passwordHash  String
+  avatarUrl     String?
+  emailVerified Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  ownedTeams              Team[]                 @relation("TeamOwner")
+  ownedTeams              Team[]                   @relation("TeamOwner")
   teamMemberships         TeamMember[]
   refreshTokens           RefreshToken[]
   passwordResetTokens     PasswordResetToken[]
   emailVerificationTokens EmailVerificationToken[]
-  sentInvitations         Invitation[]           @relation("InvitationInvitedBy")
+  sentInvitations         Invitation[]             @relation("InvitationInvitedBy")
+  activityLogs            ActivityLog[]
 
   @@map("users")
 }
@@ -86,10 +87,11 @@ model Team {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  members       TeamMember[]
-  roles         Role[]
-  invitations   Invitation[]
-  subscription  Subscription?
+  members      TeamMember[]
+  roles        Role[]
+  invitations  Invitation[]
+  subscription Subscription?
+  activityLogs ActivityLog[]
 
   @@map("teams")
 }
@@ -122,9 +124,9 @@ model Role {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  permissions     RolePermission[]
-  teamMembers     TeamMember[]
-  invitations     Invitation[]
+  permissions RolePermission[]
+  teamMembers TeamMember[]
+  invitations Invitation[]
 
   @@unique([teamId, name])
   @@map("roles")
@@ -132,8 +134,8 @@ model Role {
 
 /// Global catalog of permission keys available in the system (seeded once).
 model Permission {
-  id          String @id @default(cuid())
-  key         String @unique
+  id          String  @id @default(cuid())
+  key         String  @unique
   description String?
 
   roles RolePermission[]
@@ -207,4 +209,25 @@ enum SubscriptionStatus {
   UNPAID
   INCOMPLETE
   INCOMPLETE_EXPIRED
+}
+
+// ---------------------------------------------------------------------------
+// Activity log
+// ---------------------------------------------------------------------------
+
+/// A lightweight audit trail of team-scoped actions, shown as a timeline in
+/// the UI. `actorId` is nullable because some events (Stripe webhooks) are
+/// system-triggered rather than performed by a signed-in user.
+model ActivityLog {
+  id        String   @id @default(cuid())
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  actorId   String?
+  actor     User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  action    String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([teamId, createdAt])
+  @@map("activity_logs")
 }
