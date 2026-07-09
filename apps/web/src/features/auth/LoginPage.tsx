@@ -16,7 +16,14 @@ export function LoginPage() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginInput>({ resolver: zodResolver(loginSchema) });
+  } = useForm<LoginInput>({
+    resolver: zodResolver(loginSchema),
+    // Pre-fill with the seeded test account in local dev only — never in a
+    // production build, where this would ship real default credentials.
+    defaultValues: import.meta.env.DEV
+      ? { email: 'test@example.com', password: 'Password123' }
+      : undefined,
+  });
   const login = useLogin();
   const navigate = useNavigate();
   const location = useLocation();
@@ -33,7 +40,7 @@ export function LoginPage() {
 
   return (
     <AuthLayout
-      title="Sign in to Felix"
+      title="Sign in to Felix Technology"
       subtitle={
         <>
           Don&apos;t have an account?{' '}
