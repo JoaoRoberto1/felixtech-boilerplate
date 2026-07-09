@@ -1,8 +1,9 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as teamsApi from '../api/teams';
 import * as rolesApi from '../api/roles';
 import * as invitationsApi from '../api/invitations';
 import * as subscriptionsApi from '../api/subscriptions';
+import * as activityApi from '../api/activity';
 import type {
   CreateTeamInput,
   UpdateTeamInput,
@@ -43,6 +44,16 @@ export function useInvitations(teamId: string | undefined) {
   return useQuery({
     queryKey: ['team', teamId, 'invitations'],
     queryFn: () => invitationsApi.listInvitations(teamId!),
+    enabled: Boolean(teamId),
+  });
+}
+
+export function useActivity(teamId: string | undefined) {
+  return useInfiniteQuery({
+    queryKey: ['team', teamId, 'activity'],
+    queryFn: ({ pageParam }) => activityApi.listActivity(teamId!, pageParam),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     enabled: Boolean(teamId),
   });
 }
