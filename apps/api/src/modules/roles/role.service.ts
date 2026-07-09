@@ -1,5 +1,7 @@
+import { ACTIVITY_ACTIONS } from '@felix/shared';
 import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../utils/errors.js';
+import { logActivity } from '../activity/activity.service.js';
 
 export async function listRoles(teamId: string) {
   return prisma.role.findMany({
@@ -12,12 +14,13 @@ export async function listRoles(teamId: string) {
 export async function createRole(
   teamId: string,
   data: { name: string; description?: string; permissionKeys: string[] },
+  actorId: string,
 ) {
   const permissions = await prisma.permission.findMany({
     where: { key: { in: data.permissionKeys } },
   });
 
-  return prisma.role.create({
+  const role = await prisma.role.create({
     data: {
       teamId,
       name: data.name,
@@ -27,6 +30,15 @@ export async function createRole(
     },
     include: { permissions: { include: { permission: true } } },
   });
+
+  await logActivity({
+    teamId,
+    actorId,
+    action: ACTIVITY_ACTIONS.ROLE_CREATED,
+    metadata: { roleName: role.name },
+  });
+
+  return role;
 }
 
 async function getEditableRoleOrThrow(teamId: string, roleId: string) {
@@ -40,6 +52,7 @@ export async function updateRole(
   teamId: string,
   roleId: string,
   data: { name?: string; description?: string; permissionKeys?: string[] },
+  actorId: string,
 ) {
   await getEditableRoleOrThrow(teamId, roleId);
 
@@ -53,15 +66,24 @@ export async function updateRole(
     });
   }
 
-  return prisma.role.update({
+  const role = await prisma.role.update({
     where: { id: roleId },
     data: { name: data.name, description: data.description },
     include: { permissions: { include: { permission: true } } },
   });
+
+  await logActivity({
+    teamId,
+    actorId,
+    action: ACTIVITY_ACTIONS.ROLE_UPDATED,
+    metadata: { roleName: role.name },
+  });
+
+  return role;
 }
 
-export async function deleteRole(teamId: string, roleId: string) {
-  await getEditableRoleOrThrow(teamId, roleId);
+export async function deleteRole(teamId: string, roleId: string, actorId: string) {
+  const role = await getEditableRoleOrThrow(teamId, roleId);
 
   const membersWithRole = await prisma.teamMember.count({ where: { roleId } });
   if (membersWithRole > 0) {
@@ -69,4 +91,11 @@ export async function deleteRole(teamId: string, roleId: string) {
   }
 
   await prisma.role.delete({ where: { id: roleId } });
+
+  await logActivity({
+    teamId,
+    actorId,
+    action: ACTIVITY_ACTIONS.ROLE_DELETED,
+    metadata: { roleName: role.name },
+  });
 }
