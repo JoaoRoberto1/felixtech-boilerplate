@@ -35,7 +35,7 @@ export async function getTeam(req: Request, res: Response): Promise<void> {
 }
 
 export async function updateTeam(req: Request, res: Response): Promise<void> {
-  const team = await teamService.updateTeam(req.params.teamId!, req.body);
+  const team = await teamService.updateTeam(req.params.teamId!, req.body, req.userId!);
   res.json({ team: toTeamDto(team) });
 }
 
@@ -54,7 +54,7 @@ export async function listMembers(req: Request, res: Response): Promise<void> {
 }
 
 export async function removeMember(req: Request, res: Response): Promise<void> {
-  await teamService.removeMember(req.params.teamId!, req.params.userId!);
+  await teamService.removeMember(req.params.teamId!, req.params.userId!, req.userId!);
   res.status(204).send();
 }
 
@@ -63,6 +63,7 @@ export async function updateMemberRole(req: Request, res: Response): Promise<voi
     req.params.teamId!,
     req.params.userId!,
     req.body.roleId,
+    req.userId!,
   );
   res.json({ member: toTeamMemberDto(member) });
 }
