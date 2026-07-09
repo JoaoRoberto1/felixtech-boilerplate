@@ -15,6 +15,7 @@ import { TeamsPage } from './features/teams/TeamsPage';
 import { TeamOverviewPage } from './features/teams/TeamOverviewPage';
 import { TeamMembersPage } from './features/teams/TeamMembersPage';
 import { RolesPage } from './features/teams/RolesPage';
+import { ActivityPage } from './features/teams/ActivityPage';
 import { BillingPage } from './features/billing/BillingPage';
 import { SettingsPage } from './features/settings/SettingsPage';
 import { AcceptInvitationPage } from './features/invitations/AcceptInvitationPage';
@@ -42,6 +43,7 @@ export function App() {
             <Route path="/teams/:teamId" element={<TeamOverviewPage />} />
             <Route path="/teams/:teamId/members" element={<TeamMembersPage />} />
             <Route path="/teams/:teamId/roles" element={<RolesPage />} />
+            <Route path="/teams/:teamId/activity" element={<ActivityPage />} />
             <Route path="/teams/:teamId/billing" element={<BillingPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/settings/profile" element={<Navigate to="/settings" replace />} />
