@@ -6,8 +6,7 @@ import {
   Users2,
   Shield,
   CreditCard,
-  UserRound,
-  KeyRound,
+  Settings,
   LogOut,
   ChevronsUpDown,
 } from 'lucide-react';
@@ -92,13 +91,9 @@ export function AppShell() {
           )}
 
           <div className={sectionLabelClass}>Account</div>
-          <NavLink to="/settings/profile" className={navItemClass}>
-            <UserRound className="h-4 w-4" strokeWidth={2} />
-            Profile
-          </NavLink>
-          <NavLink to="/settings/security" className={navItemClass}>
-            <KeyRound className="h-4 w-4" strokeWidth={2} />
-            Security
+          <NavLink to="/settings" className={navItemClass}>
+            <Settings className="h-4 w-4" strokeWidth={2} />
+            Settings
           </NavLink>
         </nav>
 
