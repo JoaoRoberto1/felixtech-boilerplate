@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { TriangleAlert } from 'lucide-react';
 import { PERMISSIONS, updateTeamSchema, type UpdateTeamInput } from '@felix/shared';
 import { useTeam, useUpdateTeam, useDeleteTeam } from '../../hooks/useTeamQueries';
 import {
@@ -17,6 +18,7 @@ import { Label } from '../../components/ui/Label';
 import { Input } from '../../components/ui/Input';
 import { FieldError } from '../../components/ui/FieldError';
 import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
 import { Spinner } from '../../components/ui/Spinner';
 import { PermissionGate } from '../../components/PermissionGate';
 import { getApiErrorMessage } from '../../api/client';
@@ -58,9 +60,17 @@ export function TeamOverviewPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">{team.name}</h1>
-        <p className="mt-1 text-sm text-slate-500">Team overview and general settings.</p>
+      <div className="flex items-center gap-4">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-brand-700 text-xl font-bold text-white">
+          {team.name.trim().charAt(0).toUpperCase() || '?'}
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">{team.name}</h1>
+          <div className="mt-1 flex items-center gap-2 text-sm text-slate-500">
+            {team.myRole?.name && <Badge>{team.myRole.name}</Badge>}
+            <span>Created {new Date(team.createdAt).toLocaleDateString()}</span>
+          </div>
+        </div>
       </div>
 
       <Card>
@@ -94,7 +104,10 @@ export function TeamOverviewPage() {
       <PermissionGate teamId={teamId} permission={PERMISSIONS.TEAM_DELETE}>
         <Card className="border-red-200">
           <CardHeader>
-            <CardTitle className="text-red-700">Danger zone</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-red-700">
+              <TriangleAlert className="h-4 w-4" strokeWidth={2} />
+              Danger zone
+            </CardTitle>
             <CardDescription>
               Deleting a team removes all its members, roles and data.
             </CardDescription>
