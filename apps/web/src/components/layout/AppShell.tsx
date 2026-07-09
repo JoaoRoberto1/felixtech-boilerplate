@@ -12,17 +12,10 @@ import {
   ChevronsUpDown,
 } from 'lucide-react';
 import { cn } from '../../lib/cn';
+import { getInitials } from '../../lib/initials';
 import { useAuthStore } from '../../stores/auth-store';
 import { useLogout } from '../../hooks/useAuth';
 import { useMyTeams } from '../../hooks/useTeamQueries';
-
-function getInitials(name: string | undefined): string {
-  if (!name) return '?';
-  const parts = name.trim().split(/\s+/);
-  const first = parts[0]?.[0] ?? '';
-  const last = parts.length > 1 ? (parts[parts.length - 1]?.[0] ?? '') : '';
-  return (first + last).toUpperCase();
-}
 
 const navItemClass = ({ isActive }: { isActive: boolean }) =>
   cn(
