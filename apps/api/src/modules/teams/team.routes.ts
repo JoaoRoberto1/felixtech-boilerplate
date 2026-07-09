@@ -14,6 +14,7 @@ import * as controller from './team.controller.js';
 import { roleRouter } from '../roles/role.routes.js';
 import { invitationRouter } from '../invitations/invitation.routes.js';
 import { subscriptionRouter } from '../subscriptions/subscription.routes.js';
+import { activityRouter } from '../activity/activity.routes.js';
 
 const teamIdParamSchema = z.object({ teamId: z.string().cuid() });
 const memberParamSchema = z.object({ teamId: z.string().cuid(), userId: z.string().cuid() });
@@ -84,3 +85,4 @@ teamRouter.get(
 teamRouter.use('/:teamId/roles', roleRouter);
 teamRouter.use('/:teamId/invitations', invitationRouter);
 teamRouter.use('/:teamId/subscription', subscriptionRouter);
+teamRouter.use('/:teamId/activity', activityRouter);
