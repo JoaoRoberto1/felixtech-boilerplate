@@ -1,8 +1,10 @@
+import { ACTIVITY_ACTIONS } from '@felix/shared';
 import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../utils/errors.js';
 import { generateOpaqueToken, hashToken } from '../../utils/tokens.js';
 import { sendEmail, teamInvitationEmail } from '../../lib/mailer.js';
 import { env } from '../../config/env.js';
+import { logActivity } from '../activity/activity.service.js';
 
 const INVITATION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -51,6 +53,13 @@ export async function createInvitation(
     html: teamInvitationEmail(team.name, acceptUrl),
   });
 
+  await logActivity({
+    teamId,
+    actorId: invitedById,
+    action: ACTIVITY_ACTIONS.MEMBER_INVITED,
+    metadata: { email: normalizedEmail, roleName: invitation.role.name },
+  });
+
   return invitation;
 }
 
@@ -62,13 +71,20 @@ export async function listInvitations(teamId: string) {
   });
 }
 
-export async function revokeInvitation(teamId: string, invitationId: string) {
+export async function revokeInvitation(teamId: string, invitationId: string, actorId: string) {
   const invitation = await prisma.invitation.findUnique({ where: { id: invitationId } });
   if (!invitation || invitation.teamId !== teamId) throw AppError.notFound('Invitation not found');
   if (invitation.status !== 'PENDING')
     throw AppError.badRequest('Only pending invitations can be revoked');
 
   await prisma.invitation.update({ where: { id: invitationId }, data: { status: 'REVOKED' } });
+
+  await logActivity({
+    teamId,
+    actorId,
+    action: ACTIVITY_ACTIONS.MEMBER_INVITE_REVOKED,
+    metadata: { email: invitation.email },
+  });
 }
 
 export async function acceptInvitation(token: string, userId: string) {
@@ -91,7 +107,7 @@ export async function acceptInvitation(token: string, userId: string) {
     throw AppError.forbidden('This invitation was sent to a different email address');
   }
 
-  return prisma.$transaction(async (tx) => {
+  const team = await prisma.$transaction(async (tx) => {
     await tx.teamMember.upsert({
       where: { teamId_userId: { teamId: invitation.teamId, userId } },
       update: {},
@@ -100,4 +116,13 @@ export async function acceptInvitation(token: string, userId: string) {
     await tx.invitation.update({ where: { id: invitation.id }, data: { status: 'ACCEPTED' } });
     return invitation.team;
   });
+
+  await logActivity({
+    teamId: invitation.teamId,
+    actorId: userId,
+    action: ACTIVITY_ACTIONS.MEMBER_JOINED,
+    metadata: { email: user.email },
+  });
+
+  return team;
 }
