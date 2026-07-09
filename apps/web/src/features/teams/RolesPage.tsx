@@ -1,10 +1,17 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { Shield, Lock, Pencil, Trash2, Plus } from 'lucide-react';
 import { PERMISSIONS, type RoleDto } from '@felix/shared';
 import { useRoles, useDeleteRole } from '../../hooks/useTeamQueries';
 import { usePermission } from '../../hooks/usePermission';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Spinner } from '../../components/ui/Spinner';
@@ -29,7 +36,13 @@ export function RolesPage() {
     setDialogOpen(true);
   };
 
-  if (isLoading) return <Spinner />;
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-16">
+        <Spinner />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -40,40 +53,60 @@ export function RolesPage() {
             Define what each role can do within this team.
           </p>
         </div>
-        {canManageRoles && <Button onClick={openCreate}>New role</Button>}
+        {canManageRoles && (
+          <Button onClick={openCreate}>
+            <Plus className="h-4 w-4" strokeWidth={2.5} />
+            New role
+          </Button>
+        )}
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle>All roles</CardTitle>
+          <CardDescription>{roles?.length ?? 0} roles configured</CardDescription>
         </CardHeader>
         <CardContent className="divide-y divide-slate-100 p-0">
           {roles?.map((role) => (
-            <div key={role.id} className="flex items-center justify-between px-5 py-3">
-              <div>
-                <div className="flex items-center gap-2">
+            <div key={role.id} className="flex items-center gap-3 px-5 py-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-700">
+                <Shield className="h-4 w-4" strokeWidth={2} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
                   <p className="text-sm font-medium text-slate-900">{role.name}</p>
-                  {role.isSystem && <Badge>System</Badge>}
+                  {role.isSystem && (
+                    <Badge className="flex items-center gap-1">
+                      <Lock className="h-3 w-3" strokeWidth={2} />
+                      System
+                    </Badge>
+                  )}
                 </div>
                 <p className="text-xs text-slate-500">{role.permissions.length} permission(s)</p>
               </div>
               {canManageRoles && !role.isSystem && (
-                <div className="flex gap-2">
-                  <Button variant="ghost" size="sm" onClick={() => openEdit(role)}>
-                    Edit
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                <div className="flex shrink-0 gap-1">
+                  <button
+                    title="Edit role"
+                    aria-label="Edit role"
+                    onClick={() => openEdit(role)}
+                    className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                  >
+                    <Pencil className="h-4 w-4" strokeWidth={2} />
+                  </button>
+                  <button
+                    title="Delete role"
+                    aria-label="Delete role"
                     onClick={() =>
                       deleteRole.mutate(role.id, {
                         onError: (err) =>
                           toast.error(getApiErrorMessage(err, 'Could not delete role')),
                       })
                     }
+                    className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
                   >
-                    Delete
-                  </Button>
+                    <Trash2 className="h-4 w-4" strokeWidth={2} />
+                  </button>
                 </div>
               )}
             </div>
