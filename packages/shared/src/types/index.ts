@@ -1,5 +1,5 @@
 import type { PermissionKey } from '../constants/permissions';
-import type { SubscriptionStatus, InvitationStatus } from '../constants';
+import type { SubscriptionStatus, InvitationStatus, ActivityAction } from '../constants';
 
 export interface UserDto {
   id: string;
@@ -72,6 +72,21 @@ export interface AuthTokensDto {
 export interface AuthResponseDto {
   user: UserDto;
   tokens: AuthTokensDto;
+}
+
+/**
+ * `metadata` shape depends on `action` (e.g. member.invited -> { email, roleName },
+ * role.updated -> { roleName }, subscription.updated -> { status }). Always
+ * optional/best-effort — the timeline falls back to a generic label per action
+ * if a field is missing.
+ */
+export interface ActivityLogDto {
+  id: string;
+  teamId: string;
+  actor: Pick<UserDto, 'id' | 'name' | 'email' | 'avatarUrl'> | null;
+  action: ActivityAction | string;
+  metadata: Record<string, string | number | boolean> | null;
+  createdAt: string;
 }
 
 export interface ApiErrorBody {
